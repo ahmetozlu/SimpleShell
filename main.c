@@ -13,15 +13,24 @@
 #define MAX_LINE 80 /* 80 chars per line, per command, should be enough. */
 
 char cwd[1024];
-int ct;
 char str[70];
-int ground;
 char string[100], *pointer;
-int position, length;
+int position, length, in,out,err;
 int i=1;
-int background; /* equals 1 if a command is followed by '&' */
+int background, ct, ground; /* equals 1 if a command is followed by '&' */
+listOfCommandPtr d,hdr=NULL,p;
+listOfCommandPtrPtr hdrr=NULL;
 char inputBuffer[MAX_LINE]; /*buffer to hold command entered */
 char *args[MAX_LINE/2 + 1]; /*command line arguments */
+char *getList;
+char *argscontrol[4];
+char *strToCharArray[70];
+char input_control[70];
+char addLink[70];
+char pipeArgs[70];
+char input[70];
+static sigjmp_buf jmpbuf;
+static volatile sig_atomic_t jumpok = 0;
 
 struct listOfCommand{
     char command[70];
@@ -31,30 +40,19 @@ struct listOfCommand{
 typedef struct listOfCommand listOfCommand;
 typedef struct listOfCommand** listOfCommandPtrPtr;
 typedef struct listOfCommand* listOfCommandPtr;
+
 void addCommand(char []);
 void removeListOfCommand();
 void showLastTenCommands(listOfCommandPtr);
 void getCommand(int i);
 void checkString(char *);
-int linkedListLength();
-listOfCommandPtr d,hdr=NULL,p;
-listOfCommandPtrPtr hdrr=NULL;
-char *getList;
-char input[70];
-char *argscontrol[4];
-char *strToCharArray[70];
-char input_control[70];
-char addLink[70];
-char pipeArgs[70];
-static sigjmp_buf jmpbuf;
-static volatile sig_atomic_t jumpok = 0;
-int in,out,err;
 void addCommand(char []);
 void myPipes(char*[]);
 void setup(char [],char* [],int*);
 void myprogio(char*[]);
-char* deblank(char*);
 void pipes(char*,char[]);
+char* deblank(char*);
+int linkedListLength();
 pid_t exec_redirect(const char *,char *[],int,int,int);
 
 /* The setup function below will not return any value, but it will just: read
