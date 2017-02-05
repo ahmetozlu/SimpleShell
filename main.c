@@ -27,6 +27,7 @@ struct listOfCommand{
     char command[70];
     struct listOfCommand *nextPtr;
 };
+
 typedef struct listOfCommand listOfCommand;
 typedef struct listOfCommand** listOfCommandPtrPtr;
 typedef struct listOfCommand* listOfCommandPtr;
@@ -61,10 +62,10 @@ in the next command line; separate it into distinct arguments (using blanks as
 delimiters), and set the args array entries to point to the beginning of what
 will become null-terminated, C-style strings. */
 void my_handler(int s){
-    printf("Ctrl+C Yakalandı %d\n",s);
+    printf("Ctrl+C signal is chaught! %d\n",s);
     pid_t child=fork();
     if(child ==0)
-    showLastTenCommands(hdr);
+        showLastTenCommands(hdr);
     else if(wait(NULL)!=child)
         perror("waitnull ctrl c");
     setup(inputBuffer, args, &background);
@@ -115,17 +116,13 @@ void my_handler(int s){
             getCommand(linkedListLength()-1);
             checkString(getList);
         }
-
     }
-
 
     if (jumpok == 0) return;
     siglongjmp(jmpbuf, 1);
-    //exit(1);
 }
 
-void setup(char inputBuffer[], char *args[],int *background)
-{
+void setup(char inputBuffer[], char *args[],int *background) {
 
     int length, /* # of characters in the command line */
         i,      /* loop index for accessing inputBuffer array */
@@ -145,60 +142,57 @@ void setup(char inputBuffer[], char *args[],int *background)
 
     start = -1;
     if (length == 0) {
-	printf("Bir ctrl+d sinyali algılandı!");
-	perror("exit");
-	exit(0);
+        printf("Ctrl+d signal is chaught!");
+        perror("exit");
+        exit(0);
 	}         /* ^d was entered, end of user command stream */
 
-/* the signal interrupted the read system call */
-/* if the process is in the read() system call, read returns -1
-  However, if this occurs, errno is set to EINTR. We can check this  value
-  and disregard the -1 value */
+    /* the signal interrupted the read system call */
+    /* if the process is in the read() system call, read returns -1
+      However, if this occurs, errno is set to EINTR. We can check this  value
+      and disregard the -1 value */
     if ( (length < 0) && (errno != EINTR) ) {
         perror("error reading the command");
-	exit(-1);           /* terminate with error code of -1 */
+        exit(-1);           /* terminate with error code of -1 */
     }
     strcpy(addLink,inputBuffer);
     strcpy(pipeArgs,inputBuffer);
 	printf(">>%s",inputBuffer);
     for (i=0;i<length;i++){ /* examine every character in the inputBuffer */
-
         switch (inputBuffer[i]){
-	    case ' ':
-	    case '\t' :               /* argument separators */
-		if(start != -1){
-                    args[ct] = &inputBuffer[start];    /* set up pointer */
-		    ct++;
-		}
-                inputBuffer[i] = '\0'; /* add a null char; make a C string */
-		start = -1;
-		break;
-
+            case ' ':
+            case '\t' :               /* argument separators */
+            if(start != -1){
+                        args[ct] = &inputBuffer[start];    /* set up pointer */
+                ct++;
+            }
+            inputBuffer[i] = '\0'; /* add a null char; make a C string */
+            start = -1;
+            break;
             case '\n':                 /* should be the final char examined */
-		if (start != -1){
-                    args[ct] = &inputBuffer[start];
-		    ct++;
-		}
-                inputBuffer[i] = '\0';
-                args[ct] = NULL; /* no more arguments to this command */
-		break;
-
-	    default :             /* some other character */
-		if (start == -1)
-		    start = i;
+            if (start != -1){
+                args[ct] = &inputBuffer[start];
+                ct++;
+            }
+            inputBuffer[i] = '\0';
+            args[ct] = NULL; /* no more arguments to this command */
+            break;
+            default :             /* some other character */
+            if (start == -1)
+                start = i;
                 if (inputBuffer[i] == '&'){
-		    *background  = 1;
+                    *background  = 1;
                     inputBuffer[i-1] = '\0';
-		}
-	} /* end of switch */
-     }    /* end of for */
-     args[ct] = NULL; /* just in case the input line was > 80 */
+            }
+        } /* end of switch */
+    }    /* end of for */
+    args[ct] = NULL; /* just in case the input line was > 80 */
 
 	for (i = 0; i <= ct; i++)
 		printf("args %d = %s\n",i,args[i]);
 } /* end of setup routine */
-char *substring(char *string, int position, int length)
-{
+
+char *substring(char *string, int position, int length){
    char *pointer;
    int c;
 
@@ -227,23 +221,21 @@ char *substring(char *string, int position, int length)
 void whereis(char *args[],int q) {
     char a[100]="whereis ";
 
-
     if(strcmp(args[0],"where")==0 && q==0){
             if(args[1] != NULL) {
                 if(args[0] != NULL) {
-                strcat(a,args[1]);
-		strcat(a,"| awk '{print $2}'");
-                strcat(a,">text.txt");
-                system(a);
-                FILE *p;
-                if((p=fopen("text.txt","r"))==NULL) {
-                    printf("\nUnable t open file text.txt");
-                    exit(1);
-                }
-                if(fgets(str,12,p)!=NULL)
-                    puts(str);
+                    strcat(a,args[1]);
+                    strcat(a,"| awk '{print $2}'");
+                    strcat(a,">text.txt");
+                    system(a);
+                    FILE *p;
+                    if((p=fopen("text.txt","r"))==NULL) {
+                        printf("\nUnable t open file text.txt");
+                        exit(1);
+                    }
+                    if(fgets(str,12,p)!=NULL)
+                        puts(str);
                     fclose(p);
-
                 }
             }
     }
@@ -251,19 +243,19 @@ void whereis(char *args[],int q) {
             if(args[0] != NULL) {
                 strcat(a,args[0]);
 		strcat(a,"| awk '{print $2}'");
-                strcat(a,">text.txt");
-                system(a);
-                FILE *p;
-                if((p=fopen("text.txt","r"))==NULL) {
-                    printf("\nUnable t open file text.txt");
-                    exit(1);
-                }
-                if(fgets(str,12,p)!=NULL)
-                    puts(str);
-                    fclose(p);
-                }
+        strcat(a,">text.txt");
+        system(a);
+        FILE *p;
+            if((p=fopen("text.txt","r"))==NULL) {
+                printf("\nUnable t open file text.txt");
+                exit(1);
+            }
+            if(fgets(str,12,p)!=NULL)
+                puts(str);
+                fclose(p);
             }
     }
+ }
 
 int forkAndExecvWorks (char* args[]) {
 	whereis(args,1);
@@ -330,8 +322,8 @@ int forkAndExeclWorks (char* args[]) {
 
 int getPwd() {
 	if (getcwd(cwd, sizeof(cwd)) != NULL)
-	fprintf(stdout, "Current working dir: %s\n", cwd);
-        else
+        fprintf(stdout, "Current working dir: %s\n", cwd);
+    else
         perror("getcwd() error");
 	return 0;
 }
@@ -344,7 +336,7 @@ void changeDirectory(char *args[]) {
 				getPwd();
 			}
 		}
-        }
+    }
 }
 
 void clearScreen(char *args[]) {
@@ -352,7 +344,7 @@ void clearScreen(char *args[]) {
 		if(args[1] == NULL) {
 				system("clear");
 		}
-        }
+    }
 }
 
 void printEnv(char *args[]) {
@@ -368,7 +360,7 @@ void printEnv(char *args[]) {
 		else if(args[1] == NULL) {
 			system("printenv");
 		}
-    	}
+    }
 }
 
 
@@ -389,7 +381,7 @@ void setEnv(char *args[]) {
 				}
 			}
 		}
-       	 }
+    }
 }
 
 void exitMethod(char *args[]) {
@@ -449,10 +441,10 @@ void substringForExecBack(char *args[]) {
 	int flag;
 
 	while (str[count1]!='\0')
-	count1++;
+        count1++;
 
 	while (search[count2]!='\0')
-	count2++;
+        count2++;
 
 	for(i=0;i<=count1-count2;i++){
 		for(j=i;j<i+count2;j++){
@@ -463,17 +455,17 @@ void substringForExecBack(char *args[]) {
 			}
 		}
 		if (flag==1)
-		break;
+            break;
 	}
 	if (flag==1) {
-	puts("SEARCH SUCCESSFUL!");
-	//execl ye gönder
-	forkAndExeclWorks (args);
+        puts("SEARCH SUCCESSFUL!");
+        //send to execl 
+        forkAndExeclWorks (args);
 	}
 	else {
-	puts("SEARCH UNSUCCESSFUL!");
-	//execv ye gönder
-	forkAndExecvWorks (args);
+        puts("SEARCH UNSUCCESSFUL!");
+        //send to execv
+        forkAndExecvWorks (args);
 	}
 }
 
@@ -489,10 +481,10 @@ void substringForExecFore(char *args[]) {
 	int flag;
 
 	while (str[count1]!='\0')
-	count1++;
+        count1++;
 
 	while (search[count2]!='\0')
-	count2++;
+        count2++;
 
 	for(i=0;i<=count1-count2;i++){
 		for(j=i;j<i+count2;j++){
@@ -503,17 +495,17 @@ void substringForExecFore(char *args[]) {
 			}
 		}
 		if (flag==1)
-		break;
+            break;
 	}
 	if (flag==1) {
-	//puts("SEARCH SUCCESSFUL!");
-	//execl ye gönder
-	forkAndExeclWorks (args);
+        //puts("SEARCH SUCCESSFUL!");
+        //send to execl
+        forkAndExeclWorks (args);
 	}
 	else {
-	//puts("SEARCH UNSUCCESSFUL!");
-	//execv ye gönder
-	forkAndExecvWorks(args);
+        puts("SEARCH UNSUCCESSFUL!");
+        //send to execv
+        forkAndExecvWorks(args);
 	}
 }
 
@@ -529,10 +521,10 @@ void substringForBackOrForeground(char *args[]) {
 	int flag;
 
 	while (str[count1]!='\0')
-	count1++;
+        count1++;
 
 	while (search[count2]!='\0')
-	count2++;
+        count2++;
 
 	for(i=0;i<=count1-count2;i++){
 		for(j=i;j<i+count2;j++){
@@ -543,17 +535,17 @@ void substringForBackOrForeground(char *args[]) {
 			}
 		}
 		if (flag==1)
-		break;
+            break;
 	}
 	if (flag==1) {
-	puts("SEARCH SUCCESSFUL! background process");
-	args[ct-1] = NULL;
-	substringForExecBack(args);
+        puts("SEARCH SUCCESSFUL! background process");
+        args[ct-1] = NULL;
+        substringForExecBack(args);
 	}
 	else {
-	puts("SEARCH UNSUCCESSFUL! foreground process");
-	substringForExecFore(args);
-	ground =1;
+        puts("SEARCH UNSUCCESSFUL! foreground process");
+        substringForExecFore(args);
+        ground =1;
 	}
 }
 
@@ -563,22 +555,23 @@ void inputFromFile(char *sin){
 	int i =0;
 	printf("\n1");
 	char* word ;
-	for (word = strtok(sin, " "); word != NULL; word = strtok(NULL, " ")){
-	        inputs[i]=word;
-        	printf("\n%s",inputs[i]);
-        	i++;
-    	}
+	
+    for (word = strtok(sin, " "); word != NULL; word = strtok(NULL, " ")){
+        inputs[i]=word;
+       	printf("\n%s",inputs[i]);
+       	i++;
+    }
 	printf("\n2\n");
 	FILE *p;
 	printf("\n%s",inputs[0]);
-        if((p=fopen(sin,"r"))==NULL){
-    	    printf("burda Unable t open file text.txt");
-    	    exit(1);
-    	}
-    	if(fgets(input,255,p)!=NULL)
+    if((p=fopen(sin,"r"))==NULL){
+        printf("burda Unable t open file text.txt");
+        exit(1);
+    }
+  	if(fgets(input,255,p)!=NULL)
         puts(input);
-    	fclose(p);
-    	printf("\n11input = %s",input);
+    fclose(p);
+    printf("\n11input = %s",input);
 }
 
 
@@ -602,16 +595,14 @@ void myprogio(char *args[]){
 
     printf(" \ninput = %s  input_control = %s\n",input,input_control);
     whereis(inputs1,1);
-
-        in = open(args[2], O_RDONLY);
-        if(args[4]!=NULL){
-            if(strcmp(args[3],">>")==0)
-                out=open(args[4],O_WRONLY|O_APPEND);
-            else
+    in = open(args[2], O_RDONLY);
+    if(args[4]!=NULL){
+        if(strcmp(args[3],">>")==0)
+            out=open(args[4],O_WRONLY|O_APPEND);
+        else
                 out = open(args[4], O_WRONLY|O_CREAT|O_TRUNC,S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH);
         }
         err = open("err.txt", O_WRONLY|O_CREAT|O_TRUNC,S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH);
-
         exec_redirect(str, inputs1, in, out, err);
 }
 
@@ -623,42 +614,41 @@ void myPipes(char *args[]){
 	int pipeNumber=0;
     
 	while(strcmp(args[pipeNumber],"|")==1 || args[pipeNumber]==NULL)
-	pipeNumber++;
-        pid_t child=fork();
+        pipeNumber++;
+    
+    pid_t child=fork();
         
 	if(child == 0){
-	        while(strcmp(args[i],"|")!=0){
-                           strcat(temp,args[i]);
-           	           printf("commands %s",temp);
+	    while(strcmp(args[i],"|")!=0){
+            strcat(temp,args[i]);
+           	printf("commands %s",temp);
       
-                if(args[i+1]==NULL){
-                    strcpy(b,temp);
-                    printf("\nb = %s",b);
-                    break;
-                }
-                else if(strcmp(args[i+1],"|")==0 && j==0){
-                    strcpy(a,temp);
-                    strcpy(input_control,temp);
-                    strcpy(temp,"");
-                    printf("\na = %s",a);
-                    j++;
-                    i++;
-                   
-                }
-		else if(strcmp(args[i+1],"|")==0  && j==1 ){
-                   strcpy(b,temp);
-                   printf("\nb = %s",b);
-                   break;
-                }
-		
-		else perror("333");
-                strcat(temp," ");
-        	i++;
+            if(args[i+1]==NULL){
+                strcpy(b,temp);
+                printf("\nb = %s",b);
+                break;
+            }
+            else if(strcmp(args[i+1],"|")==0 && j==0){
+                strcpy(a,temp);
+                strcpy(input_control,temp);
+                strcpy(temp,"");
+                printf("\na = %s",a);
+                j++;
+                i++;    
+            }
+            else if(strcmp(args[i+1],"|")==0  && j==1 ){
+                strcpy(b,temp);
+                printf("\nb = %s",b);
+                break;
+            }
+            else perror("333");
+        strcat(temp," ");
+        i++;
         }
         c=strstr(a,args[0]);	
         printf("\na = %s b = %s\n",input_control,b);
-	printf("Pipeda");
-	pipes(c,b);
+        printf("Pipeda");
+        pipes(c,b);
    }
 }
 
@@ -693,7 +683,7 @@ void pipes(char *a,char b[]){
 }
 
 int startPage(char *args[]) {
-    struct sigaction sigIntHandler; // ctrl c sinyali
+    struct sigaction sigIntHandler; // ctrl c signal
 
 
 	sigIntHandler.sa_handler = my_handler;
@@ -712,64 +702,53 @@ int startPage(char *args[]) {
     		addCommand(addLink);
 	
 		if(strcmp(args[0],"cd")==0)
-		if(args[1] != NULL)
-		if(args[2] == NULL)
-		changeDirectory(args);
+            if(args[1] != NULL)
+                if(args[2] == NULL)
+                    changeDirectory(args)
+            if(strcmp(args[0],"clr")==0)
+                if(args[1] == NULL)
+                    clearScreen(args);
+                    if(strcmp(args[0],"print")==0)
+                        printEnv(args);
+                    if(strcmp(args[0],"set")==0)
+                        if(args[1] != NULL)
+                            if(strcmp(args[2],"=")==0)
+                                if(args[3] != NULL)
+                                    if(args[4] == NULL)
+                                        setEnv(args);
 
-		if(strcmp(args[0],"clr")==0)
-		if(args[1] == NULL)
-		clearScreen(args);
-
-		if(strcmp(args[0],"print")==0)
-		printEnv(args);
-
-		if(strcmp(args[0],"set")==0)
-		if(args[1] != NULL)
-		if(strcmp(args[2],"=")==0)
-		if(args[3] != NULL)
-		if(args[4] == NULL)
-		setEnv(args);
-
-		if(strcmp(args[0],"where")==0)
-		if(args[1] != NULL)
-		if(args[2] == NULL)
-		whereis(args,0);
-
-		if(strcmp(args[0],"exit")==0)
-		if(args[1] == NULL)
-		exitMethod(args);
-
-		if(strcmp(args[0],"myprog")==0)
-                myprogio(args);
-		
-		if(args[0] != NULL && strcmp(args[0],"where")!=0)
-		substringForBackOrForeground(args);
-
-        	if(strstr(pipeArgs,"|")!=NULL){
-			myPipes(args);
-        	}
-
-		if (sigsetjmp(jmpbuf, 1))
-                fprintf(stderr, "Returned to main loop due to ^c\n");
-           	jumpok = 1;
-
-		if(strcmp(args[0],"path")==0)
-		pathMethod(args);
-		else
-		return 1;
-        }
-
+                                    if(strcmp(args[0],"where")==0)
+                                        if(args[1] != NULL)
+                                            if(args[2] == NULL)
+                                                whereis(args,0);
+                                            if(strcmp(args[0],"exit")==0)
+                                                if(args[1] == NULL)
+                                                    exitMethod(args);
+                                            if(strcmp(args[0],"myprog")==0)
+                                                myprogio(args);                  
+                                            if(args[0] != NULL && strcmp(args[0],"where")!=0)
+                                                substringForBackOrForeground(args);
+                                            if(strstr(pipeArgs,"|")!=NULL){
+                                                myPipes(args);
+                                            }
+                                            if (sigsetjmp(jmpbuf, 1))
+                                                fprintf(stderr, "Returned to main loop due to ^c\n");
+                                            jumpok = 1;
+                                            if(strcmp(args[0],"path")==0)
+                                                pathMethod(args);
+                                            else
+                                                return 1;
+                                            }
     return 1;
 }
 
 int main(void) {
         while (1){
 	       startPage(args);
-
                /** the steps are:
                (1) fork a child process using fork()
                (2) the child process will invoke execvp()
-   	       (3) if background == 0, the parent will wait,
+               (3) if background == 0, the parent will wait,
                otherwise it will invoke the setup() function again. */
         }
     }
@@ -778,17 +757,12 @@ int main(void) {
         if(linkedListLength()==10){
             removeListOfCommand();
         }
-
         listOfCommandPtr newNode, temp, prev;
-
         newNode=malloc(sizeof(listOfCommand));
         strcpy(newNode->command,t);
         newNode->nextPtr=NULL;
-
-
         if (hdr == NULL)
             hdr=newNode;
-
         else {
             temp=hdr;
             while (temp != NULL) {
@@ -797,23 +771,16 @@ int main(void) {
             }
             if (temp!=NULL)
                 newNode->nextPtr=temp;
-
-
             if (temp==hdr)
                 hdr=newNode;
-
             else
                 prev->nextPtr=newNode;
         }
-
     }
 
     void removeListOfCommand(){
-
         hdr=hdr->nextPtr;
         printf("deleting was succesful\n");
-
-
     }
 
     void getCommand(int i){
@@ -864,7 +831,8 @@ int main(void) {
             strcat(w,c2);
             printf("c2 = %s",w);
             system(w);
-        }else if(strstr(c1,"clr")!=NULL){
+        }
+        else if(strstr(c1,"clr")!=NULL){
             system("clear");
         }
         else if(strstr(c1,"myprog")!=NULL){
@@ -882,7 +850,8 @@ int main(void) {
                 }
             printf(" \ninput = %s  input_control = %s\n",c1,input_control);
             myprogio(inputs);
-        }else if(strstr(c1,"print")!=NULL){
+        }
+        else if(strstr(c1,"print")!=NULL){
             char *inputs[70]={NULL,NULL,NULL,NULL,NULL,NULL,NULL};
             int i = 0;
             strcpy(input_control,c1);
@@ -896,9 +865,8 @@ int main(void) {
                 i++;
                 }
             printEnv(inputs);
-
-
-	}else if(strstr(c1,"set")!=NULL){
+        }
+        else if(strstr(c1,"set")!=NULL){
             char *inputs[70]={NULL,NULL,NULL,NULL,NULL,NULL,NULL};
             int i = 0;
             strcpy(input_control,c1);
@@ -912,16 +880,16 @@ int main(void) {
                 i++;
                 }
             setEnv(inputs);
-	}else if(strstr(c1,"ls")!=NULL || strstr(c1,"cd")!=NULL){
+        }
+        else if(strstr(c1,"ls")!=NULL || strstr(c1,"cd")!=NULL){
             system(c1);
-	}
-	else{
-		printf("linkedlist elsede");
- 
+        }
+        else{
+            printf("linkedlist elsede");
         }
     }
-	char* deblank(char* input)
-	{
+    
+	char* deblank(char* input) {
 	    int i,j;
 	    char *output=input;
 	    for (i = 0, j = 0; i<strlen(input); i++,j++)
@@ -935,78 +903,66 @@ int main(void) {
 	    return output;
 	}
 
-	pid_t exec_redirect(
-        	      const char *path, char *args[],
-        	      int new_in, int new_out, int new_err
-        	      )
-	{
+	pid_t exec_redirect(const char *path, char *args[], int new_in, int new_out, int new_err) {
+        pid_t child;
 
-    	pid_t child;
+        // Fork new process
+        child = fork();
 
-   	 // Fork new process
-  	  child = fork();
+        if (child == 0) {
 
-  	  if (child == 0) {
+            // Child process 	
+           // Redirect standard input
+           if (new_in >= 0) {
+            close(STDIN_FILENO);
+            printf("error!");
+            dup2(new_in, STDIN_FILENO);
+           }
 
-  	      // Child process
-        	
-     	   // Redirect standard input
-        	if (new_in >= 0) {
-        	    close(STDIN_FILENO);
-        	    //perror("input içinde");
-        	    printf("asasassaaaaaaaaa");
+                // Redirect standard output
+                if (new_out >= 0) {
+                    close(STDOUT_FILENO);
+                    printf("out");
+                    dup2(new_out, STDOUT_FILENO);
+                }
 
-      
-        	    dup2(new_in, STDIN_FILENO);
-        	}
-
-        	// Redirect standard output
-        	if (new_out >= 0) {
-        	    close(STDOUT_FILENO);
-        	    printf("outtttttt");
-        	    dup2(new_out, STDOUT_FILENO);
-        	}
-
-     
-        	if (new_err >= 0) {
-        	    perror("error içinde");
-        	    close(STDERR_FILENO);
-        	    dup2(new_err, STDERR_FILENO);
-        	}
-            printf("after error %s a",args[0]);
-        	// Execute the command
+         
+                if (new_err >= 0) {
+                    perror("error");
+                    close(STDERR_FILENO);
+                    dup2(new_err, STDERR_FILENO);
+                }
+                // Execute the command
                 if(strcmp(args[0],"ls")==0 ||strcmp(args[0],"ps")==0 ){
-        	    printf("\n\nlsde");
-                char *inputs[70]={NULL,NULL,NULL,NULL,NULL,NULL,NULL};
-                execv(path,args);
-        	}
-        	else if(strcmp(args[0],"where")==0){
-                    printf("\n\nwherede");
-        	    char a[70];
-        	    whereis(args,0);
-        	}
-        	else if(strcmp(args[0],"print")==0){
-            printf("\n\nprintde");
-			printEnv(args);
-			}
-			else if(strcmp(args[0],"myprog")==0){
-                printf("\n\nmyprogde");
-			myprogio(args);
-			}
-			else if(strcmp(args[0],"set")==0){
-                printf("\n\nsetde");
-			if(args[1] != NULL)
-            if(strcmp(args[2],"=")==0)
-            if(args[3] != NULL)
-            setEnv(args);
-			}
-            else{
-        	printf("nereye girceni bulamıyo");
-        	}
-    	}
-
-    	// Parent process
-    	return child;
-
+                    printf("\n\nlsde");
+                    char *inputs[70]={NULL,NULL,NULL,NULL,NULL,NULL,NULL};
+                    execv(path,args);
+                }
+                else if(strcmp(args[0],"where")==0){
+                        printf("\n\nwherede");
+                    char a[70];
+                    whereis(args,0);
+                }
+                else if(strcmp(args[0],"print")==0){
+                    printf("\n\nprintde");
+                    printEnv(args);
+                }
+                else if(strcmp(args[0],"myprog")==0){
+                    printf("\n\nmyprogde");
+                    myprogio(args);
+                }
+                else if(strcmp(args[0],"set")==0){
+                    printf("\n\nsetde");
+                    if(args[1] != NULL)
+                        if(strcmp(args[2],"=")==0)
+                            if(args[3] != NULL)
+                                setEnv(args);
+                }
+                else{
+                    printf("Error!");
+                }
+            }
+            // Parent process
+            return child;
 	}
 
